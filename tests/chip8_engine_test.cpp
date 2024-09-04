@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <sys/stat.h>
 #include <chip8_engine.hpp>
 #include <cstring>
 #include <numeric>
@@ -21,4 +22,7 @@ TEST(chip8_engine_test, change_font) {
     std::iota(new_font, new_font + 80, 0);
     chip8.change_fontset(new_font);
     EXPECT_FALSE(memcmp(chip8.get_memory() + 0x50, new_font, 80));
+}
+
+TEST(chip8_engine_test, load_from_pointer) {
 }
