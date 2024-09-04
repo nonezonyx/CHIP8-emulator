@@ -4,6 +4,8 @@
 #include <cstdint>
 
 namespace nznyx::chip8 {
+class chip8_engine;
+
 enum class keys : std::uint8_t {
     // layout from COSMAC VIP
     KEY_1,
@@ -24,7 +26,7 @@ enum class keys : std::uint8_t {
     KEY_F,
 };
 
-constexpr unsigned char chip8_fontset[80] = {
+constexpr unsigned char chip8_default_fontset[80] = {
     0xF0, 0x90, 0x90, 0x90, 0xF0,  // 0
     0x20, 0x60, 0x20, 0x20, 0x70,  // 1
     0xF0, 0x10, 0xF0, 0x80, 0xF0,  // 2
