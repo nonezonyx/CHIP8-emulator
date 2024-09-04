@@ -6,6 +6,8 @@
 namespace nznyx::chip8 {
 class chip8_engine {
 private:
+    unsigned char memory[4096];
+
 public:
     void load_fontset() noexcept;
 };
