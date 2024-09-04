@@ -1,3 +1,13 @@
+CMakeCache.txt
+CMakeFiles/
+Makefile
+cmake_install.cmake
+*.sln
+*.vcxproj
+*.vcxproj.filters
+.cache/
+build/
+
 # Prerequisites
 *.d
 
