@@ -27,7 +27,7 @@ enum class key : std::uint8_t {
     KEY_F,
 };
 
-constexpr unsigned char chip8_default_fontset[80] = {
+constexpr std::uint8_t chip8_default_fontset[80] = {
     0xF0, 0x90, 0x90, 0x90, 0xF0,  // 0
     0x20, 0x60, 0x20, 0x20, 0x70,  // 1
     0xF0, 0x10, 0xF0, 0x80, 0xF0,  // 2

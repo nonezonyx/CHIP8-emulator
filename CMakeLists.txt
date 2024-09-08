@@ -23,6 +23,7 @@ target_link_libraries(chip8-emulator PRIVATE gtest gtest_main)
 
 add_executable(chip8-engine-test tests/chip8_engine_test.cpp src/chip8_engine.cpp)
 target_link_libraries(chip8-engine-test PRIVATE gtest gtest_main)
+target_compile_definitions(chip8-engine-test PRIVATE TEST_DATA_DIR="${CMAKE_SOURCE_DIR}/tests/test_data/")
 
 enable_testing()
 
