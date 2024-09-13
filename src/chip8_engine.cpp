@@ -14,7 +14,7 @@ namespace nznyx::chip8 {
 chip8_engine::chip8_engine(
     const std::function<void()> &clear_screen,
     const std::function<bool(int, int, const std::uint8_t *, int)> &draw,
-    size_t opcodes_per_sec
+    std::size_t opcodes_per_sec
 ) noexcept
     : clear_screen_(clear_screen),
       draw_(draw),
@@ -40,7 +40,7 @@ void chip8_engine::reset() noexcept {
     sound_timer_ = 0;
 }
 
-void chip8_engine::load(const std::uint8_t *rom, size_t size) noexcept {
+void chip8_engine::load(const std::uint8_t *rom, std::size_t size) noexcept {
     std::memcpy(memory_ + PROGRAM_POSITION, rom, size);
 }
 

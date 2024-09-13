@@ -13,12 +13,12 @@ public:
     chip8_engine(
         const std::function<void()> &clear_screen,
         const std::function<bool(int, int, const std::uint8_t *, int)> &draw,
-        size_t opcodes_per_sec = 700
+        std::size_t opcodes_per_sec = 700
     ) noexcept;
 
     void change_fontset(const std::uint8_t fontset[80]) noexcept;
     void reset() noexcept;
-    void load(const std::uint8_t *rom, size_t size) noexcept;
+    void load(const std::uint8_t *rom, std::size_t size) noexcept;
     void load(const std::string &filename);
 
     bool is_pressed(key key) noexcept;
@@ -30,17 +30,17 @@ public:
     const std::uint8_t *get_memory() const noexcept;
 
     /* MEMORY LAYOUT CONSTANTS */
-    constexpr static size_t STACK_SIZE = 16;
-    constexpr static size_t FONT_POSITION = 0x50;
-    constexpr static size_t PROGRAM_POSITION = 0x200;
-    constexpr static size_t MEMORY_SIZE = 4096;
-    constexpr static size_t VARIABLE_REGISTER_SIZE = 16;
+    constexpr static std::size_t STACK_SIZE = 16;
+    constexpr static std::size_t FONT_POSITION = 0x50;
+    constexpr static std::size_t PROGRAM_POSITION = 0x200;
+    constexpr static std::size_t MEMORY_SIZE = 4096;
+    constexpr static std::size_t VARIABLE_REGISTER_SIZE = 16;
 
 private:
     std::function<void()> clear_screen_;
     std::function<bool(int, int, const std::uint8_t *, int)> draw_;
-    size_t opcodes_per_hertz_ = 0;
-    size_t opcodes_since_timer_decrementing_ = 0;
+    std::size_t opcodes_per_hertz_ = 0;
+    std::size_t opcodes_since_timer_decrementing_ = 0;
 
     /* CHIP8 memory */
     std::uint16_t stack_[STACK_SIZE] = {};
