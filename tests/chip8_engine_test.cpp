@@ -87,3 +87,21 @@ TEST(chip8_engine_test, load_from_file_IBM_logo) {
 
     EXPECT_EQ(ss.str(), expected_ss.str());
 }
+
+TEST(chip8_engine_test, opcode_corax89) {
+    screen.clear_screen();
+    chip8_engine chip8{bound_clear, bound_draw};
+    chip8.load(TEST_DATA_DIR "test_opcode.ch8");
+    for (int i = 0; i < 10000; ++i) {
+        chip8.execute();
+    }
+
+    std::stringstream ss;
+    ss << screen << '\n';
+
+    std::fstream expected_file(TEST_DATA_DIR "test_opcode.txt");
+    std::stringstream expected_ss;
+    expected_ss << expected_file.rdbuf();
+
+    EXPECT_EQ(ss.str(), expected_ss.str());
+}

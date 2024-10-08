@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <functional>
+#include <optional>
 #include <string>
 
 namespace nznyx::chip8 {
@@ -41,6 +42,8 @@ private:
     std::function<bool(int, int, const std::uint8_t *, int)> draw_;
     std::size_t opcodes_per_hertz_ = 0;
     std::size_t opcodes_since_timer_decrementing_ = 0;
+    // key first pressed since last execute()
+    std::optional<key> last_key_ = std::nullopt;
 
     /* CHIP8 memory */
     std::uint16_t stack_[STACK_SIZE] = {};
