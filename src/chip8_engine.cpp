@@ -7,6 +7,8 @@
 #include <cstring>
 #include <cwchar>
 #include <fstream>
+#include <optional>
+#include <random>
 #include <utility>
 
 namespace nznyx::chip8 {
@@ -59,6 +61,9 @@ bool chip8_engine::is_pressed(key key) noexcept {
 }
 
 void chip8_engine::set_pressed(key key, bool state) noexcept {
+    if (!last_key_.has_value()) {
+        last_key_ = key;
+    }
     keys_pressed_ &= ~((state ? 0 : 1) << std::to_underlying(key));
 }
 
@@ -72,35 +77,178 @@ void chip8_engine::execute(std::uint16_t opcode) {
     std::uint8_t type = opcode >> 12;
     std::uint8_t x = (opcode >> 8) & 0xF;
     std::uint8_t y = (opcode >> 4) & 0xF;
-    std::uint8_t n = opcode & 0xF;
-    std::uint8_t nn = opcode & 0xFF;
-    std::uint16_t nnn = opcode & 0xFFF;
+    std::uint8_t nibble = opcode & 0xF;
+    std::uint8_t byte = opcode & 0xFF;
+    std::uint16_t address = opcode & 0xFFF;
+    std::uint8_t &VX = variable_registers_[x];
+    std::uint8_t &VY = variable_registers_[y];
+    std::uint8_t &VF = variable_registers_[0xF];
+
     switch (type) {
         case 0x0: {
-            clear_screen_();
+            switch (byte) {
+                case 0xE0: {
+                    clear_screen_();
+                } break;
+                case 0xEE: {
+                    program_counter_ = stack_[--stack_pointer_];
+                } break;
+                default:
+                    assert(false);
+            }
         } break;
         case 0x1: {
-            program_counter_ = nnn;
+            program_counter_ = address;
+        } break;
+        case 0x2: {
+            stack_[stack_pointer_++] = program_counter_;
+            program_counter_ = address;
+        } break;
+        case 0x3: {
+            if (VX == byte) {
+                program_counter_ += 2;
+            }
+        } break;
+        case 0x4: {
+            if (VX != byte) {
+                program_counter_ += 2;
+            }
+        } break;
+        case 0x5: {
+            assert(nibble == 0);
+            if (VX == VY) {
+                program_counter_ += 2;
+            }
         } break;
         case 0x6: {
-            variable_registers_[x] = nn;
+            VX = byte;
         } break;
         case 0x7: {
-            variable_registers_[x] += nn;
+            VX += byte;
+        } break;
+        case 0x8: {
+            switch (nibble) {
+                case 0x0: {
+                    VX = VY;
+                } break;
+                case 0x1: {
+                    VX |= VY;
+                } break;
+                case 0x2: {
+                    VX &= VY;
+                } break;
+                case 0x3: {
+                    VX ^= VY;
+                } break;
+                case 0x4: {
+                    std::uint8_t snapshot = VX;
+                    VX += VY;
+                    VF = VX < snapshot;
+                } break;
+                case 0x5: {
+                    VF = VX < VY;
+                    VX -= VY;
+                } break;
+                case 0x6: {
+                    VF = VX & 1;
+                    VX >>= 1;
+                } break;
+                case 0x7: {
+                    VF = VY < VX;
+                    VX = VY - VY;
+                } break;
+                case 0xE: {
+                    VF = VX >> 7;
+                    VX <<= 1;
+                } break;
+                default:
+                    assert(false);
+            }
+        } break;
+        case 0x9: {
+            assert(nibble == 0);
+            if (VX != VY) {
+                program_counter_ += 2;
+            }
         } break;
         case 0xA: {
-            index_register_ = nnn;
+            index_register_ = address;
+        } break;
+        case 0xB: {
+            program_counter_ = address + variable_registers_[0x0];
+        } break;
+        case 0xC: {
+            static std::random_device rd;
+            static std::mt19937 gen(rd());
+            VX = gen() & byte;
         } break;
         case 0xD: {
-            variable_registers_[0xF] = 0;
-            variable_registers_[0xF] = draw_(
-                variable_registers_[x] & 63, variable_registers_[y] & 31,
-                memory_ + index_register_, n
-            );
+            VF = draw_(VX & 63, VY & 31, memory_ + index_register_, nibble);
+        } break;
+        case 0xE: {
+            switch (byte) {
+                case 0x9E: {
+                    if (is_pressed(static_cast<key>(VX))) {
+                        program_counter_ += 2;
+                    }
+                } break;
+                case 0xA1: {
+                    if (!is_pressed(static_cast<key>(VX))) {
+                        program_counter_ += 2;
+                    }
+                } break;
+                default:
+                    assert(false);
+            }
+        } break;
+        case 0xF: {
+            switch (byte) {
+                case 0x07: {
+                    VX = delay_timer_;
+                } break;
+                case 0x0A: {
+                    if (last_key_.has_value()) {
+                        VX = static_cast<int>(last_key_.value());
+                    } else {
+                        program_counter_ -= 2;
+                    }
+                } break;
+                case 0x15: {
+                    delay_timer_ = VX;
+                } break;
+                case 0x18: {
+                    sound_timer_ = VX;
+                } break;
+                case 0x1E: {
+                    index_register_ += VX;
+                } break;
+                case 0x29: {
+                    index_register_ = FONT_POSITION + 5 * VX;
+                } break;
+                case 0x33: {
+                    memory_[index_register_] = VX / 100;
+                    memory_[index_register_ + 1] = (VX % 100) / 10;
+                    memory_[index_register_ + 2] = VX % 10;
+                } break;
+                case 0x55: {
+                    for (std::size_t i = 0; i <= x; ++i) {
+                        memory_[index_register_ + i] = variable_registers_[i];
+                    }
+                } break;
+                case 0x65: {
+                    for (std::size_t i = 0; i <= x; ++i) {
+                        variable_registers_[i] = memory_[index_register_ + i];
+                    }
+                } break;
+                default:
+                    assert(false);
+            }
         } break;
         default:
             assert(false);
     }
+
+    last_key_ = std::nullopt;
 }
 
 void chip8_engine::execute() {
