@@ -2,28 +2,31 @@
 #define CHIP8_ENGINE_FWD_HPP_
 
 #include <cstdint>
+#include <functional>
 
 namespace nznyx::chip8 {
 
+using clear_func_type = std::function<void()>;
+using draw_func_type = std::function<bool(int, int, const std::uint8_t *, int)>;
 class chip8_engine;
 
 enum class key : std::uint8_t {
     // layout from COSMAC VIP
+    KEY_0,
     KEY_1,
     KEY_2,
     KEY_3,
-    KEY_C,
     KEY_4,
     KEY_5,
     KEY_6,
-    KEY_D,
     KEY_7,
     KEY_8,
     KEY_9,
-    KEY_E,
     KEY_A,
-    KEY_0,
     KEY_B,
+    KEY_C,
+    KEY_D,
+    KEY_E,
     KEY_F,
 };
 

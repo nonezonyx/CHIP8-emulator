@@ -1,3 +1,4 @@
+#include <elf.h>
 #include <strings.h>
 #include <algorithm>
 #include <cassert>
@@ -14,8 +15,8 @@
 namespace nznyx::chip8 {
 
 chip8_engine::chip8_engine(
-    const std::function<void()> &clear_screen,
-    const std::function<bool(int, int, const std::uint8_t *, int)> &draw,
+    const clear_func_type &clear_screen,
+    const draw_func_type &draw,
     std::size_t opcodes_per_sec
 ) noexcept
     : clear_screen_(clear_screen),
@@ -43,10 +44,12 @@ void chip8_engine::reset() noexcept {
 }
 
 void chip8_engine::load(const std::uint8_t *rom, std::size_t size) noexcept {
+    reset();
     std::memcpy(memory_ + PROGRAM_POSITION, rom, size);
 }
 
 void chip8_engine::load(const std::string &filename) {
+    reset();
     std::ifstream file(filename, std::ios_base::binary);
     file.exceptions(std::ios_base::failbit | std::ios_base::badbit);
     file.seekg(0, std::ios::end);
@@ -60,11 +63,13 @@ bool chip8_engine::is_pressed(key key) noexcept {
     return (keys_pressed_ >> std::to_underlying(key)) & 1;
 }
 
-void chip8_engine::set_pressed(key key, bool state) noexcept {
-    if (!last_key_.has_value()) {
-        last_key_ = key;
+void chip8_engine::set_pressed(key key_, bool state) noexcept {
+    last_key_ = state ? std::optional<key>{key_} : std::nullopt;
+    if (state) {
+        keys_pressed_ |= 1 << std::to_underlying(key_);
+    } else {
+        keys_pressed_ &= ~(1 << std::to_underlying(key_));
     }
-    keys_pressed_ &= ~((state ? 0 : 1) << std::to_underlying(key));
 }
 
 void chip8_engine::execute(std::uint16_t opcode) {
@@ -146,7 +151,7 @@ void chip8_engine::execute(std::uint16_t opcode) {
                     VF = VX < snapshot;
                 } break;
                 case 0x5: {
-                    VF = VX < VY;
+                    VF = VY < VX;
                     VX -= VY;
                 } break;
                 case 0x6: {
@@ -154,8 +159,8 @@ void chip8_engine::execute(std::uint16_t opcode) {
                     VX >>= 1;
                 } break;
                 case 0x7: {
-                    VF = VY < VX;
-                    VX = VY - VY;
+                    VF = VX < VY;
+                    VX = VY - VX;
                 } break;
                 case 0xE: {
                     VF = VX >> 7;
