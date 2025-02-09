@@ -4,7 +4,6 @@
 #include <chip8_engine_fwd.hpp>
 #include <cstddef>
 #include <cstdint>
-#include <functional>
 #include <optional>
 #include <string>
 
@@ -12,8 +11,8 @@ namespace nznyx::chip8 {
 class chip8_engine {
 public:
     chip8_engine(
-        const std::function<void()> &clear_screen,
-        const std::function<bool(int, int, const std::uint8_t *, int)> &draw,
+        const clear_func_type &clear_screen,
+        const draw_func_type &draw,
         std::size_t opcodes_per_sec = 700
     ) noexcept;
 
@@ -38,8 +37,8 @@ public:
     constexpr static std::size_t VARIABLE_REGISTER_SIZE = 16;
 
 private:
-    std::function<void()> clear_screen_;
-    std::function<bool(int, int, const std::uint8_t *, int)> draw_;
+    clear_func_type clear_screen_;
+    draw_func_type draw_;
     std::size_t opcodes_per_hertz_ = 0;
     std::size_t opcodes_since_timer_decrementing_ = 0;
     // key first pressed since last execute()
