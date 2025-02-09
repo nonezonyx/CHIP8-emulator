@@ -1,37 +1,40 @@
 cmake_minimum_required(VERSION 3.22)
 
+# Global settings
 set(CMAKE_EXPORT_COMPILE_COMMANDS True)
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
+set(CMAKE_CXX_VISIBILITY_PRESET hidden)  # Recommended by Boost.DLL's manual
+
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 project(chip8-emulator CXX)
 
-set(CMAKE_CXX_STANDARD 23)
-set(CMAKE_CXX_STANDARD_REQUIRED True)
+# Options to enable/disable building different components
+option(BUILD_CHIP8_EMULATOR "Build the Chip8 Emulator executable" ON)
+option(BUILD_CHIP8_VIEW_DLL "Build the SDL2 view DLL" ON)
+option(BUILD_CHIP8_TESTS "Build the Chip8 Engine tests" OFF)
 
-set(CMAKE_CXX_VISIBILITY_PRESET hidden)  # Recommended by Boost.DLL's manual
-
-# Add the GoogleTest submodule
-add_subdirectory(lib/googletest)
-
+# Locate dependencies
 cmake_policy(SET CMP0167 NEW)
 find_package(Boost REQUIRED COMPONENTS filesystem system)
-
 find_package(SDL2 REQUIRED)
-include_directories(${SDL2_INCLUDE_DIRS})
 
-include_directories(include)
+# Add directories for include files
+include_directories(include ${SDL2_INCLUDE_DIRS})
 
-add_executable(chip8-emulator src/main.cpp src/chip8_engine.cpp)
-target_link_libraries(chip8-emulator PRIVATE gtest gtest_main Boost::filesystem Boost::system )
+# Add subdirectories for optional components
+if (BUILD_CHIP8_EMULATOR)
+    add_subdirectory(src/emulator)
+endif()
 
-add_executable(chip8-engine-test tests/chip8_engine_test.cpp src/chip8_engine.cpp)
-target_link_libraries(chip8-engine-test PRIVATE gtest gtest_main)
-target_compile_definitions(chip8-engine-test PRIVATE TEST_DATA_DIR="${CMAKE_SOURCE_DIR}/tests/test_data/")
+if (BUILD_CHIP8_VIEW_DLL)
+    add_subdirectory(src/view)
+endif()
 
-add_library(sdl2_view SHARED src/sdl2_view.cpp)
-target_include_directories(sdl2_view PRIVATE include ${SDL2_INCLUDE_DIRS})
-target_link_libraries(sdl2_view PRIVATE Boost::filesystem Boost::system ${SDL2_LIBRARIES})
-set_target_properties(sdl2_view PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
-
-enable_testing()
-
-add_test(NAME MyClassTest COMMAND MyProjectTests)
+if (BUILD_CHIP8_TESTS)
+    enable_testing()
+    add_subdirectory(tests)
+endif()
